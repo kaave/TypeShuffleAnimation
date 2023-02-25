@@ -3,11 +3,13 @@ import "splitting/dist/splitting-cells.css";
 import Splitting from "splitting";
 import { getRandomChar, getRandomColor, randomNumber } from "./utils";
 
-type SplittingResult = Array<{
-  el: HTMLElement;
-  lines: HTMLElement[][];
-  words: HTMLElement[];
-}>;
+type SplittingResult = [
+  {
+    el: HTMLElement;
+    lines: HTMLElement[][];
+    words: HTMLElement[];
+  }
+];
 
 /**
  * Class representing one line
@@ -46,10 +48,7 @@ class Cell {
         color: string;
       } = "";
 
-  /**
-   * Constructor.
-   * @param element - the char element (<span>)
-   */
+  /** @param element - the char element (<span>) */
   constructor(
     element: HTMLElement,
     {
@@ -163,33 +162,29 @@ export class TypeShuffle {
 
   /** clear all the cells chars */
   clearCells() {
-    for (const line of this.lines) {
-      for (const cell of line.cells) {
-        cell.set("&nbsp;");
-      }
-    }
+    this.lines.forEach((line) =>
+      line.cells.forEach((cell) => cell.set("&nbsp;"))
+    );
   }
 
-  fx1() {
-    // max iterations for each cell to change the current value
-    const MAX_CELL_ITERATIONS = 45;
-
-    let finished = 0;
-
-    // clear all cells values
+  fx1(maxCellIterations = 45) {
+    let currentIndex = 0;
     this.clearCells();
 
-    // cell's loop animation
-    // each cell will change its value MAX_CELL_ITERATIONS times
+    function isLastIteration(iteration: number): boolean {
+      return iteration === maxCellIterations - 1;
+    }
+
     const loop = (line: Line, cell: Cell, iteration = 0) => {
       // cache the previous value
       cell.cache = cell.state;
 
       // set back the original cell value if at the last iteration
-      if (iteration === MAX_CELL_ITERATIONS - 1) {
+      if (isLastIteration(iteration)) {
         cell.set(cell.original);
-        ++finished;
-        if (finished === this.totalChars) {
+
+        currentIndex += 1;
+        if (currentIndex === this.totalChars) {
           this.isAnimating = false;
         }
       }
@@ -211,103 +206,82 @@ export class TypeShuffle {
       }
 
       // doesn't count if it's an empty space
-      if (cell.cache != "&nbsp;") {
-        ++iteration;
-      }
+      const nextIteration = iteration + (cell.cache !== "&nbsp;" ? 1 : 0);
 
       // repeat...
-      if (iteration < MAX_CELL_ITERATIONS) {
-        setTimeout(() => loop(line, cell, iteration), 15);
+      if (nextIteration < maxCellIterations) {
+        setTimeout(() => loop(line, cell, nextIteration), 15);
       }
     };
 
-    // set delays for each cell animation
-    for (const line of this.lines) {
-      for (const cell of line.cells) {
-        setTimeout(() => loop(line, cell), (line.position + 1) * 200);
-      }
-    }
+    // simple top-left to bottom-right animation.
+    this.start(loop, ({ position }) => (position + 1) * 200);
   }
 
-  fx2() {
-    const MAX_CELL_ITERATIONS = 20;
-    let finished = 0;
+  fx2(maxCellIterations = 20, speed = 1) {
+    let currentIndex = 0;
+
     const loop = (line: Line, cell: Cell, iteration = 0) => {
-      if (iteration === MAX_CELL_ITERATIONS - 1) {
+      if (iteration === maxCellIterations - 1) {
         cell.set(cell.original);
         const { el } = cell;
 
         el.style.opacity = String(0);
+        setTimeout(() => (el.style.opacity = String(1)), 300);
 
-        setTimeout(() => {
-          el.style.opacity = String(1);
-        }, 300);
-
-        ++finished;
-        if (finished === this.totalChars) {
-          this.isAnimating = false;
-        }
+        currentIndex += 1;
+        this.isAnimating = currentIndex !== this.totalChars;
       } else {
         cell.set(getRandomChar());
       }
 
-      ++iteration;
-      if (iteration < MAX_CELL_ITERATIONS) {
-        setTimeout(() => loop(line, cell, iteration), 40);
+      if (iteration < maxCellIterations - 1) {
+        setTimeout(() => loop(line, cell, iteration + 1), 40);
       }
     };
 
-    for (const line of this.lines) {
-      for (const cell of line.cells) {
-        setTimeout(() => loop(line, cell), (cell.position + 1) * 30);
-      }
-    }
+    // left to right animation.
+    // vertical position is not used.
+    this.start(loop, (_, { position }) => (position + 1) * (30 / speed));
   }
 
-  fx3() {
-    const MAX_CELL_ITERATIONS = 10;
-    let finished = 0;
+  fx3(maxCellIterations = 10) {
+    let currentIndex = 0;
     this.clearCells();
 
     const loop = (line: Line, cell: Cell, iteration = 0) => {
-      if (iteration === MAX_CELL_ITERATIONS - 1) {
+      if (iteration === maxCellIterations - 1) {
         cell.set(cell.original);
-        ++finished;
-        if (finished === this.totalChars) {
+
+        currentIndex += 1;
+        if (currentIndex === this.totalChars) {
           this.isAnimating = false;
         }
       } else {
         cell.set(getRandomChar());
       }
 
-      ++iteration;
-      if (iteration < MAX_CELL_ITERATIONS) {
-        setTimeout(() => loop(line, cell, iteration), 80);
+      if (iteration < maxCellIterations - 1) {
+        setTimeout(() => loop(line, cell, iteration + 1), 80);
       }
     };
 
-    for (const line of this.lines) {
-      for (const cell of line.cells) {
-        setTimeout(() => loop(line, cell), randomNumber(0, 2000));
-      }
-    }
+    // random animation.
+    this.start(loop, () => randomNumber(0, 2000));
   }
 
-  fx4() {
-    const MAX_CELL_ITERATIONS = 30;
-    let finished = 0;
+  fx4(maxCellIterations = 30) {
+    let currentIndex = 0;
     this.clearCells();
 
     const loop = (line: Line, cell: Cell, iteration = 0) => {
       cell.cache = cell.state;
 
-      if (iteration === MAX_CELL_ITERATIONS - 1) {
+      if (iteration === maxCellIterations - 1) {
         cell.set(cell.original);
 
-        ++finished;
-        if (finished === this.totalChars) {
-          this.isAnimating = false;
-        }
+        currentIndex += 1;
+        this.isAnimating = currentIndex !== this.totalChars;
       } else if (cell.position === 0) {
         cell.set(["*", ":"][Math.floor(Math.random() * 2)]);
       } else if (
@@ -320,39 +294,32 @@ export class TypeShuffle {
         ++iteration;
       }
 
-      if (iteration < MAX_CELL_ITERATIONS) {
+      if (iteration < maxCellIterations) {
         setTimeout(() => loop(line, cell, iteration), 15);
       }
     };
 
-    for (const line of this.lines) {
-      for (const cell of line.cells) {
-        setTimeout(
-          () => loop(line, cell),
-          Math.abs(this.lines.length / 2 - line.position) * 400
-        );
-      }
-    }
+    // center to top and bottom animation.
+    this.start(
+      loop,
+      ({ position }) => Math.abs(this.lines.length / 2 - position) * 400
+    );
   }
 
-  fx5() {
-    // max iterations for each cell to change the current value
-    const MAX_CELL_ITERATIONS = 30;
-    let finished = 0;
+  fx5(maxCellIterations = 30) {
+    let currentIndex = 0;
     this.clearCells();
 
     const loop = (line: Line, cell: Cell, iteration = 0) => {
       cell.cache = { state: cell.state, color: cell.color };
 
-      if (iteration === MAX_CELL_ITERATIONS - 1) {
+      if (iteration === maxCellIterations - 1) {
         cell.color = cell.originalColor;
         cell.el.style.color = cell.color;
         cell.set(cell.original);
 
-        ++finished;
-        if (finished === this.totalChars) {
-          this.isAnimating = false;
-        }
+        currentIndex += 1;
+        this.isAnimating = currentIndex !== this.totalChars;
       } else if (cell.position === 0) {
         cell.color = getRandomColor();
         cell.el.style.color = cell.color;
@@ -376,52 +343,42 @@ export class TypeShuffle {
         ++iteration;
       }
 
-      if (iteration < MAX_CELL_ITERATIONS) {
+      if (iteration < maxCellIterations) {
         setTimeout(() => loop(line, cell, iteration), 10);
       }
     };
 
-    for (const line of this.lines) {
-      for (const cell of line.cells) {
-        setTimeout(() => loop(line, cell), (line.position + 1) * 200);
-      }
-    }
+    this.start(loop, ({ position }) => (position + 1) * 200);
   }
 
-  fx6() {
-    // max iterations for each cell to change the current value
-    const MAX_CELL_ITERATIONS = 15;
-    let finished = 0;
+  fx6(maxCellIterations = 15) {
+    let currentIndex = 0;
     const loop = (line: Line, cell: Cell, iteration = 0) => {
       cell.cache = { state: cell.state, color: cell.color };
 
-      if (iteration === MAX_CELL_ITERATIONS - 1) {
+      if (iteration === maxCellIterations - 1) {
         cell.set(cell.original);
 
         cell.color = cell.originalColor;
         cell.el.style.color = cell.color;
 
-        ++finished;
-        if (finished === this.totalChars) {
-          this.isAnimating = false;
-        }
+        currentIndex += 1;
+        this.isAnimating = currentIndex !== this.totalChars;
       } else {
         cell.set(getRandomChar());
         cell.color = getRandomColor();
         cell.el.style.color = cell.color;
       }
 
-      ++iteration;
-      if (iteration < MAX_CELL_ITERATIONS) {
-        setTimeout(() => loop(line, cell, iteration), randomNumber(30, 110));
+      if (iteration < maxCellIterations - 1) {
+        setTimeout(
+          () => loop(line, cell, iteration + 1),
+          randomNumber(30, 110)
+        );
       }
     };
 
-    for (const line of this.lines) {
-      for (const cell of line.cells) {
-        setTimeout(() => loop(line, cell), (line.position + 1) * 80);
-      }
-    }
+    this.start(loop, ({ position }) => (position + 1) * 80);
   }
 
   /**
@@ -432,6 +389,17 @@ export class TypeShuffle {
     if (!effectIsValid(effect) || this.isAnimating) return;
     this.isAnimating = true;
     this.effects[effect]();
+  }
+
+  start(
+    loop: (line: Line, cell: Cell) => void,
+    calcTimeoutMs: (line: Line, cell: Cell) => number
+  ): void {
+    this.lines.forEach((line) =>
+      line.cells.forEach((cell) => {
+        setTimeout(() => loop(line, cell), calcTimeoutMs(line, cell));
+      })
+    );
   }
 }
 
