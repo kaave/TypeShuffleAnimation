@@ -347,9 +347,7 @@ export class TypeShuffle {
           this.isAnimating = false;
         }
       } else if (cell.position === 0) {
-        cell.color = ["#3e775d", "#61dca3", "#61b3dc"][
-          Math.floor(Math.random() * 3)
-        ];
+        cell.color = getRandomColor();
         if (cell.el) {
           cell.el.style.color = cell.color;
         }
@@ -408,10 +406,7 @@ export class TypeShuffle {
         }
       } else {
         cell.set(getRandomChar());
-
-        cell.color = ["#2b4539", "#61dca3", "#61b3dc"][
-          Math.floor(Math.random() * 3)
-        ];
+        cell.color = getRandomColor();
 
         if (cell.el) {
           cell.el.style.color = cell.color;
@@ -507,8 +502,14 @@ const lettersAndSymbols = [
   "9",
 ];
 
-function getRandomChar() {
+function getRandomChar(): typeof lettersAndSymbols[number] {
   return lettersAndSymbols[
     Math.floor(Math.random() * lettersAndSymbols.length)
   ];
+}
+
+function getRandomColor(): `#${string}` {
+  const colors = ["#3e775d", "#61dca3", "#61b3dc"] as const;
+
+  return colors[Math.floor(Math.random() * colors.length)];
 }
