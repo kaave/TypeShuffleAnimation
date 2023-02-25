@@ -26,11 +26,8 @@ class Line {
  * Class representing one cell/char
  */
 class Cell {
-  // DOM elements
-  DOM: { el: HTMLElement | null } = {
-    // the char element (<span>)
-    el: null,
-  };
+  // the char element (<span>)
+  el: HTMLElement | null = null;
   // cell position
   position = -1;
   // previous cell position
@@ -60,8 +57,8 @@ class Cell {
       previousCellPosition,
     }: { position: number; previousCellPosition: number }
   ) {
-    this.DOM.el = element;
-    this.original = this.DOM.el.innerHTML;
+    this.el = element;
+    this.original = this.el.innerHTML;
     this.state = this.original;
     this.color = this.originalColor = getComputedStyle(
       document.documentElement
@@ -73,8 +70,8 @@ class Cell {
   set(value: string): void {
     this.state = value;
 
-    if (this.DOM.el) {
-      this.DOM.el.innerHTML = this.state;
+    if (this.el) {
+      this.el.innerHTML = this.state;
     }
   }
 }
@@ -84,10 +81,7 @@ class Cell {
  */
 export class TypeShuffle {
   // DOM elements
-  DOM: { el: HTMLElement | null } = {
-    // the main text element
-    el: null,
-  };
+  el: HTMLElement | null = null;
   // array of Line objs
   lines: Line[] = [];
   // array of letters and symbols
@@ -108,11 +102,11 @@ export class TypeShuffle {
    * @param {Element} element - main text element
    */
   constructor(element: HTMLElement) {
-    this.DOM.el = element;
+    this.el = element;
 
     // Apply Splitting (two times to have lines, words and chars)
     const results = Splitting({
-      target: this.DOM.el,
+      target: this.el,
       by: "lines",
     }) as any as SplittingResult; // Note: Maybe `@types/Splitting` defined old spec types. It's current(1.0.6) type.
 
@@ -229,7 +223,7 @@ export class TypeShuffle {
     const loop = (line: Line, cell: Cell, iteration = 0) => {
       if (iteration === MAX_CELL_ITERATIONS - 1) {
         cell.set(cell.original);
-        const { el } = cell.DOM;
+        const { el } = cell;
         if (!el) {
           return;
         }
@@ -343,8 +337,8 @@ export class TypeShuffle {
 
       if (iteration === MAX_CELL_ITERATIONS - 1) {
         cell.color = cell.originalColor;
-        if (cell.DOM.el) {
-          cell.DOM.el.style.color = cell.color;
+        if (cell.el) {
+          cell.el.style.color = cell.color;
         }
         cell.set(cell.original);
 
@@ -356,8 +350,8 @@ export class TypeShuffle {
         cell.color = ["#3e775d", "#61dca3", "#61b3dc"][
           Math.floor(Math.random() * 3)
         ];
-        if (cell.DOM.el) {
-          cell.DOM.el.style.color = cell.color;
+        if (cell.el) {
+          cell.el.style.color = cell.color;
         }
         cell.set(
           iteration < 9
@@ -372,8 +366,8 @@ export class TypeShuffle {
           cell.color = cache.color;
         }
 
-        if (cell.DOM.el) {
-          cell.DOM.el.style.color = cell.color;
+        if (cell.el) {
+          cell.el.style.color = cell.color;
         }
       }
 
@@ -404,8 +398,8 @@ export class TypeShuffle {
         cell.set(cell.original);
 
         cell.color = cell.originalColor;
-        if (cell.DOM.el) {
-          cell.DOM.el.style.color = cell.color;
+        if (cell.el) {
+          cell.el.style.color = cell.color;
         }
 
         ++finished;
@@ -419,8 +413,8 @@ export class TypeShuffle {
           Math.floor(Math.random() * 3)
         ];
 
-        if (cell.DOM.el) {
-          cell.DOM.el.style.color = cell.color;
+        if (cell.el) {
+          cell.el.style.color = cell.color;
         }
       }
 
