@@ -1,7 +1,7 @@
 import "splitting/dist/splitting.css";
 import "splitting/dist/splitting-cells.css";
 import Splitting from "splitting";
-import { randomNumber } from "./utils";
+import { getRandomChar, getRandomColor, randomNumber } from "./utils";
 
 type SplittingResult = Array<{
   el: HTMLElement;
@@ -105,44 +105,66 @@ export class TypeShuffle {
     this.el = element;
 
     // Apply Splitting (two times to have lines, words and chars)
-    const results = Splitting({
+    const [result] = Splitting({
       target: this.el,
       by: "lines",
     }) as any as SplittingResult; // Note: Maybe `@types/Splitting` defined old spec types. It's current(1.0.6) type.
 
-    results.forEach((s) => Splitting({ target: s.words }));
+    Splitting({ target: result.words });
 
     // for every line
-    for (const [linePosition, lineArr] of results[0].lines.entries()) {
+    result.lines.forEach((element, i) => {
       // create a new Line
-      const line = new Line(linePosition);
-      let cells = [];
+      const line = new Line(i);
+      let cells: Cell[] = [];
       let charCount = 0;
-      // for every word of each line
-      for (const word of lineArr) {
+
+      element.forEach((word) => {
         // for every character of each line
-        for (const char of [...word.querySelectorAll<HTMLElement>(".char")]) {
+        word.querySelectorAll<HTMLElement>(".char").forEach((char) => {
           cells.push(
             new Cell(char, {
               position: charCount,
               previousCellPosition: charCount === 0 ? -1 : charCount - 1,
             })
           );
+
           ++charCount;
-        }
-      }
+        });
+      });
+
       line.cells = cells;
       this.lines.push(line);
-      this.totalChars += charCount;
-    }
 
-    // TODO
-    // window.addEventListener('resize', () => this.resize());
+      this.totalChars += charCount;
+    });
+
+    // for every line
+    // result.lines.forEach((element, i) => {
+    //   // create a new Line
+    //   const line = new Line(i);
+
+    //   const cells = element
+    //     .map((word, i) =>
+    //       // for every character of each line
+    //       Array.from(word.querySelectorAll<HTMLElement>(".char")).map(
+    //         (char, j) =>
+    //           new Cell(char, {
+    //             position: i + j,
+    //             previousCellPosition: i + j === 0 ? -1 : i + j - 1,
+    //           })
+    //       )
+    //     )
+    //     .flat();
+
+    //   line.cells = cells;
+    //   this.lines.push(line);
+
+    //   this.totalChars = cells.length;
+    // });
   }
 
-  /**
-   * clear all the cells chars
-   */
+  /** clear all the cells chars */
   clearCells() {
     for (const line of this.lines) {
       for (const cell of line.cells) {
@@ -151,13 +173,6 @@ export class TypeShuffle {
     }
   }
 
-  /**
-   *
-   * @returns {string} a random char from this.lettersAndSymbols
-   */
-  /**
-   * Effect 1 - clear cells and animate each line cells (delays per line and per cell)
-   */
   fx1() {
     // max iterations for each cell to change the current value
     const MAX_CELL_ITERATIONS = 45;
@@ -439,77 +454,4 @@ export class TypeShuffle {
 
 function effectIsValid(effect: string): effect is keyof TypeShuffle["effects"] {
   return ["fx1", "fx2", "fx3", "fx4", "fx5", "fx6"].includes(effect);
-}
-
-const lettersAndSymbols = [
-  "A",
-  "B",
-  "C",
-  "D",
-  "E",
-  "F",
-  "G",
-  "H",
-  "I",
-  "J",
-  "K",
-  "L",
-  "M",
-  "N",
-  "O",
-  "P",
-  "Q",
-  "R",
-  "S",
-  "T",
-  "U",
-  "V",
-  "W",
-  "X",
-  "Y",
-  "Z",
-  "!",
-  "@",
-  "#",
-  "$",
-  "&",
-  "*",
-  "(",
-  ")",
-  "-",
-  "_",
-  "+",
-  "=",
-  "/",
-  "[",
-  "]",
-  "{",
-  "}",
-  ";",
-  ":",
-  "<",
-  ">",
-  ",",
-  "0",
-  "1",
-  "2",
-  "3",
-  "4",
-  "5",
-  "6",
-  "7",
-  "8",
-  "9",
-];
-
-function getRandomChar(): typeof lettersAndSymbols[number] {
-  return lettersAndSymbols[
-    Math.floor(Math.random() * lettersAndSymbols.length)
-  ];
-}
-
-function getRandomColor(): `#${string}` {
-  const colors = ["#3e775d", "#61dca3", "#61b3dc"] as const;
-
-  return colors[Math.floor(Math.random() * colors.length)];
 }
