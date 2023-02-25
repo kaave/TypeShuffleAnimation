@@ -11,17 +11,12 @@ type SplittingResult = [
   }
 ];
 
-/**
- * Class representing one line
- */
+/** Class representing one line */
 class Line {
-  position = -1;
   // cells/chars
   cells: Cell[] = [];
 
-  constructor(linePosition: number) {
-    this.position = linePosition;
-  }
+  constructor(readonly position: number) {}
 }
 
 /**
@@ -29,7 +24,7 @@ class Line {
  */
 class Cell {
   // the char element (<span>)
-  el: HTMLElement;
+  element: HTMLElement;
   // cell position
   position = -1;
   // previous cell position
@@ -56,8 +51,8 @@ class Cell {
       previousCellPosition,
     }: { position: number; previousCellPosition: number }
   ) {
-    this.el = element;
-    this.original = this.el.innerHTML;
+    this.element = element;
+    this.original = this.element.innerHTML;
     this.state = this.original;
     this.color = this.originalColor = getComputedStyle(
       document.documentElement
@@ -68,7 +63,7 @@ class Cell {
 
   set(value: string): void {
     this.state = value;
-    this.el.innerHTML = this.state;
+    this.element.innerHTML = this.state;
   }
 }
 
@@ -116,23 +111,26 @@ export class TypeShuffle {
       let charCount = 0;
 
       element.forEach((word) => {
-        // for every character of each line
-        word.querySelectorAll<HTMLElement>(".char").forEach((char) => {
-          cells.push(
-            new Cell(char, {
-              position: charCount,
-              previousCellPosition: charCount === 0 ? -1 : charCount - 1,
-            })
-          );
-
-          ++charCount;
+        const cellCollection = Array.from(
+          word.querySelectorAll<HTMLElement>(".char")
+        ).map((char, i) => {
+          const totalCharCount = charCount + i;
+          return new Cell(char, {
+            position: totalCharCount,
+            previousCellPosition:
+              totalCharCount === 0 ? -1 : totalCharCount - 1,
+          });
         });
+
+        cells.push(...cellCollection);
+        charCount += cellCollection.length;
       });
 
       line.cells = cells;
       this.lines.push(line);
 
       this.totalChars += charCount;
+      console.log(charCount, this.totalChars);
     });
 
     // for every line
@@ -171,38 +169,43 @@ export class TypeShuffle {
     let currentIndex = 0;
     this.clearCells();
 
-    function isLastIteration(iteration: number): boolean {
-      return iteration === maxCellIterations - 1;
-    }
-
     const loop = (line: Line, cell: Cell, iteration = 0) => {
       // cache the previous value
       cell.cache = cell.state;
 
-      // set back the original cell value if at the last iteration
-      if (isLastIteration(iteration)) {
-        cell.set(cell.original);
+      const actionType =
+        iteration === maxCellIterations - 1
+          ? "lastIteration"
+          : cell.position === 0
+          ? "firstPosition"
+          : "useCache";
 
-        currentIndex += 1;
-        if (currentIndex === this.totalChars) {
-          this.isAnimating = false;
-        }
-      }
-      // if the cell is the first one in its line then generate a random char
-      else if (cell.position === 0) {
+      switch (actionType) {
+        // set back the original cell value if at the last iteration
+        case "lastIteration":
+          cell.set(cell.original);
+
+          currentIndex += 1;
+          if (currentIndex === this.totalChars) {
+            this.isAnimating = false;
+          }
+          break;
+
+        // if the cell is the first one in its line then generate a random char
         // show specific characters for the first 9 iterations (looks cooler)
-        cell.set(
-          iteration < 9
-            ? ["*", "-", "\u0027", "\u0022"][Math.floor(Math.random() * 4)]
-            : getRandomChar()
-        );
-      }
-      // get the cached value of the previous cell.
-      // This will result in the illusion that the chars are sliding from left to right
-      else if (
-        typeof line.cells[cell.previousCellPosition].cache === "string"
-      ) {
-        cell.set(line.cells[cell.previousCellPosition].cache as string);
+        case "firstPosition":
+          cell.set(
+            iteration < 9
+              ? getRandomInclude(["*", "-", "\u0027", "\u0022"])
+              : getRandomChar()
+          );
+          break;
+
+        // get the cached value of the previous cell.
+        // This will result in the illusion that the chars are sliding from left to right
+        case "useCache":
+          cell.set(line.cells[cell.previousCellPosition].cache as string);
+          break;
       }
 
       // doesn't count if it's an empty space
@@ -224,7 +227,7 @@ export class TypeShuffle {
     const loop = (line: Line, cell: Cell, iteration = 0) => {
       if (iteration === maxCellIterations - 1) {
         cell.set(cell.original);
-        const { el } = cell;
+        const { element: el } = cell;
 
         el.style.opacity = String(0);
         setTimeout(() => (el.style.opacity = String(1)), 300);
@@ -283,19 +286,16 @@ export class TypeShuffle {
         currentIndex += 1;
         this.isAnimating = currentIndex !== this.totalChars;
       } else if (cell.position === 0) {
-        cell.set(["*", ":"][Math.floor(Math.random() * 2)]);
+        cell.set(getRandomInclude(["*", ":"]));
       } else if (
         typeof line.cells[cell.previousCellPosition].cache === "string"
       ) {
         cell.set(line.cells[cell.previousCellPosition].cache as string);
       }
 
-      if (cell.cache != "&nbsp;") {
-        ++iteration;
-      }
-
-      if (iteration < maxCellIterations) {
-        setTimeout(() => loop(line, cell, iteration), 15);
+      const nextIteration = iteration + (cell.cache !== "&nbsp;" ? 1 : 0);
+      if (nextIteration < maxCellIterations) {
+        setTimeout(() => loop(line, cell, nextIteration), 15);
       }
     };
 
@@ -315,17 +315,17 @@ export class TypeShuffle {
 
       if (iteration === maxCellIterations - 1) {
         cell.color = cell.originalColor;
-        cell.el.style.color = cell.color;
+        cell.element.style.color = cell.color;
         cell.set(cell.original);
 
         currentIndex += 1;
         this.isAnimating = currentIndex !== this.totalChars;
       } else if (cell.position === 0) {
         cell.color = getRandomColor();
-        cell.el.style.color = cell.color;
+        cell.element.style.color = cell.color;
         cell.set(
           iteration < 9
-            ? ["*", "-", "\u0027", "\u0022"][Math.floor(Math.random() * 4)]
+            ? getRandomInclude(["*", "-", "\u0027", "\u0022"])
             : getRandomChar()
         );
       } else {
@@ -336,15 +336,13 @@ export class TypeShuffle {
           cell.color = cache.color;
         }
 
-        cell.el.style.color = cell.color;
+        cell.element.style.color = cell.color;
       }
 
-      if (cell.cache.state != "&nbsp;") {
-        ++iteration;
-      }
+      const nextIteration = iteration + (cell.cache.state !== "&nbsp;" ? 1 : 0);
 
-      if (iteration < maxCellIterations) {
-        setTimeout(() => loop(line, cell, iteration), 10);
+      if (nextIteration < maxCellIterations) {
+        setTimeout(() => loop(line, cell, nextIteration), 10);
       }
     };
 
@@ -360,14 +358,14 @@ export class TypeShuffle {
         cell.set(cell.original);
 
         cell.color = cell.originalColor;
-        cell.el.style.color = cell.color;
+        cell.element.style.color = cell.color;
 
         currentIndex += 1;
         this.isAnimating = currentIndex !== this.totalChars;
       } else {
         cell.set(getRandomChar());
         cell.color = getRandomColor();
-        cell.el.style.color = cell.color;
+        cell.element.style.color = cell.color;
       }
 
       if (iteration < maxCellIterations - 1) {
@@ -387,6 +385,7 @@ export class TypeShuffle {
    */
   trigger(effect = "fx1") {
     if (!effectIsValid(effect) || this.isAnimating) return;
+
     this.isAnimating = true;
     this.effects[effect]();
   }
@@ -401,6 +400,10 @@ export class TypeShuffle {
       })
     );
   }
+}
+
+function getRandomInclude<T extends Array<unknown>>(array: T): T[number] {
+  return array[Math.floor(Math.random() * array.length)];
 }
 
 function effectIsValid(effect: string): effect is keyof TypeShuffle["effects"] {
