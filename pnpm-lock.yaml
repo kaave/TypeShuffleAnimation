@@ -1,6 +1,7 @@
 lockfileVersion: 5.4
 
 specifiers:
+  '@types/splitting': ^1.0.0
   parcel: ^2.8.3
   splitting: ^1.0.6
 
@@ -8,6 +9,7 @@ dependencies:
   splitting: 1.0.6
 
 devDependencies:
+  '@types/splitting': 1.0.0
   parcel: 2.8.3
 
 packages:
@@ -869,6 +871,10 @@ packages:
 
   /@types/parse-json/4.0.0:
     resolution: {integrity: sha512-//oorEZjL6sbPcKUaCdIGlIUeH26mgzimjBB77G6XRgnDl/L5wOnpyBGRe/Mmf5CVW3PwEBE1NjiMZ/ssFh4wA==}
+    dev: true
+
+  /@types/splitting/1.0.0:
+    resolution: {integrity: sha512-4S25wPUoCOVwgOoxPeyPQC3nzKVZl86cMvOJw4YwttS77uS4WOmZi9uuclXqEEZFk3d4XXATnSa89VAydtdKbA==}
     dev: true
 
   /abortcontroller-polyfill/1.7.5:
