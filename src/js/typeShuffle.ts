@@ -27,7 +27,7 @@ class Line {
  */
 class Cell {
   // the char element (<span>)
-  el: HTMLElement | null = null;
+  el: HTMLElement;
   // cell position
   position = -1;
   // previous cell position
@@ -69,10 +69,7 @@ class Cell {
 
   set(value: string): void {
     this.state = value;
-
-    if (this.el) {
-      this.el.innerHTML = this.state;
-    }
+    this.el.innerHTML = this.state;
   }
 }
 
@@ -81,7 +78,7 @@ class Cell {
  */
 export class TypeShuffle {
   // DOM elements
-  el: HTMLElement | null = null;
+  el: HTMLElement;
   // array of Line objs
   lines: Line[] = [];
   // array of letters and symbols
@@ -239,9 +236,6 @@ export class TypeShuffle {
       if (iteration === MAX_CELL_ITERATIONS - 1) {
         cell.set(cell.original);
         const { el } = cell;
-        if (!el) {
-          return;
-        }
 
         el.style.opacity = String(0);
 
@@ -352,9 +346,7 @@ export class TypeShuffle {
 
       if (iteration === MAX_CELL_ITERATIONS - 1) {
         cell.color = cell.originalColor;
-        if (cell.el) {
-          cell.el.style.color = cell.color;
-        }
+        cell.el.style.color = cell.color;
         cell.set(cell.original);
 
         ++finished;
@@ -363,9 +355,7 @@ export class TypeShuffle {
         }
       } else if (cell.position === 0) {
         cell.color = getRandomColor();
-        if (cell.el) {
-          cell.el.style.color = cell.color;
-        }
+        cell.el.style.color = cell.color;
         cell.set(
           iteration < 9
             ? ["*", "-", "\u0027", "\u0022"][Math.floor(Math.random() * 4)]
@@ -379,9 +369,7 @@ export class TypeShuffle {
           cell.color = cache.color;
         }
 
-        if (cell.el) {
-          cell.el.style.color = cell.color;
-        }
+        cell.el.style.color = cell.color;
       }
 
       if (cell.cache.state != "&nbsp;") {
@@ -411,9 +399,7 @@ export class TypeShuffle {
         cell.set(cell.original);
 
         cell.color = cell.originalColor;
-        if (cell.el) {
-          cell.el.style.color = cell.color;
-        }
+        cell.el.style.color = cell.color;
 
         ++finished;
         if (finished === this.totalChars) {
@@ -422,10 +408,7 @@ export class TypeShuffle {
       } else {
         cell.set(getRandomChar());
         cell.color = getRandomColor();
-
-        if (cell.el) {
-          cell.el.style.color = cell.color;
-        }
+        cell.el.style.color = cell.color;
       }
 
       ++iteration;
